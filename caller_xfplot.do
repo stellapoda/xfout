@@ -9,6 +9,20 @@ cd "/Users/zitongliu/Dropbox/2019/xfout"
 do "xfplot.ado"
 
 
+ use "simu_dataset_xfout.dta", clear
+ 
+xtmelogit bi_outcome1 timepoint##treatment##i.cluster_id || community_id: || unique_child:, matsqrt
+
+
+* xi: xtmelogit bi_outcome1 i.timepoint*i.treatment*i.community_id || community_id: || cluster_id: , matsqrt
+
+exit
+
+ xfplot, savem("mytiral", replace) within(cluster_id)
+
+
+/*
+
 * I.  SIMULATION: 
 
 set obs 300
@@ -58,21 +72,25 @@ foreach out of varlist outcome* {
 gen bi_`out' = (`out' > 0)
 }
 
+* community_id, suppose there are 10 communities, from 1 to 10
+generate community_id = round((9)* uniform()+1) if timepoint == 1
+bys unique_child: replace community_id = community_id[1]
+
 * cluster_id: integer, suppose there are 5 clusters， from 1 to 5
-generate cluster_id = round((4)*runiform()+a) if timepoint == 1
-bys unique_child: replace cluster_id = cluster_id[1]
+generate cluster_id = 1 if community_id <= 3
+replace cluster_id = 3 if community_id >= 6
+replace cluster_id = 2 if cluster_id == . 
+
+
 drop zs_treat zs_time e
+
 
 save "simu_dataset_xfout.dta", replace
 
 ********************************************************************************
 
 
-use "simu_dataset_xfout.dta", clear
 
-xtmelogit bi_outcome1 timepoint##treatment || cluster_id: || unique_child:, matsqrt
-
-xfplot 
 
 * II. ESTIMATION
 /*
